@@ -113,3 +113,17 @@ class PositionStore(defaultdict):
     def __missing__(self, key: str) -> Position:
         self[key] = new = self.default_factory(key)
         return new
+
+    def update_positions(self, transaction: Transaction) -> Tuple[float, int]:
+        pass    
+        # TODO Update logic should be handled by PositionStore
+        def _update_positions(self, transaction: Transaction) -> float:
+        asset = transaction.asset
+        positions = self.positions
+
+        current_position = positions[asset]
+        # TODO This does not update the stored position, only the reference.
+        profit_realized = current_position.update(transaction)
+
+        # TODO Include calculation of number of contracts opened in Position.update
+        return profit_realized, 1
