@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pandas as pd
 
 
@@ -8,7 +10,7 @@ def process_profitchart_data(df):
     _df['datetime'] = _df['Data'] + ' ' + _df['Hora']
     _df.index = pd.to_datetime(_df['datetime'], format='%d/%m/%Y %H:%M:%S').values
 
-    _df = _df.drop(['Data', 'Hora', 'datetime', 'Ativo', 'Quantidade'], axis=1)
+    _df = _df.drop(['Data', 'Hora', 'datetime', 'Ativo'], axis=1)
 
     _df = _df.rename(columns={
         'Abertura': 'open',
@@ -16,9 +18,21 @@ def process_profitchart_data(df):
         'Mínimo': 'low',
         'Fechamento': 'close',
         'Volume': 'volume',
+        'Quantidade': 'quantity'
     })
 
     _df = _df.applymap(lambda value: value.replace('.', '').replace(',', '.')).astype(float)
+    _df['quantity'] = _df['quantity'].astype(int)
     _df = _df.sort_index()
 
     return _df
+
+
+def generate_id(existing_ids) -> str:
+    collision = True
+
+    while collision:
+        new_id = uuid4().hex
+        collision = new_id in existing_ids
+
+    return new_id
