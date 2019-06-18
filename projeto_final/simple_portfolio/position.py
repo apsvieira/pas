@@ -16,19 +16,14 @@ class Position:
     def __init__(
         self,
         asset: str,
-        entry_price: float = 0,
-        quantity: int = 0,
+        entries: Optional[Dict] = None
     ) -> None:
         self.asset = asset
 
         self.entries = {
             'SHORT': [],
             'LONG': []
-        }
-
-        if quantity > 0 and entry_price > 0:
-            entry = self._make_entry(entry_price, quantity)
-            self.entries[type].appen(entry)
+        } if entries is None else entries
 
     @staticmethod
     def _make_entry(entry_price, quantity):
@@ -39,15 +34,16 @@ class Position:
 
         return entry
 
-    def update(self, transaction: Transaction) -> Optional[float]:
+    def update(self, transaction: Transaction) -> Tuple['Position', float, int]:
         profit, liquidated_quantity = self._liquidate_opposite_entries(transaction)
 
         if liquidated_quantity < transaction.quantity:
-            self._register_entry(transaction)
+            updated_entries = self._register_entry(transaction)
+            self.entries = updated_entries
 
-        return profit
+        return self, profit, liquidated_quantity
 
-    def _register_entry(self, transaction: Transaction) -> None:
+    def _register_entry(self, transaction: Transaction) -> Dict:
         direction = transaction.type
         new_entry = self._make_entry(transaction.price, transaction.quantity)
 
@@ -62,7 +58,7 @@ class Position:
         )
 
         current_entries[direction] = entry_list
-        self.entries = current_entries
+        return current_entries
 
     def _liquidate_opposite_entries(self, transaction: Transaction) -> Tuple[float, float]:
         current_entries = self.entries.copy()
@@ -114,16 +110,13 @@ class PositionStore(defaultdict):
         self[key] = new = self.default_factory(key)
         return new
 
-    def update_positions(self, transaction: Transaction) -> Tuple[float, int]:
-        pass    
-        # TODO Update logic should be handled by PositionStore
-        def _update_positions(self, transaction: Transaction) -> float:
-        asset = transaction.asset
-        positions = self.positions
+    # TODO implement logic to roll back a transaction
+    def update_position(self, transaction: Transaction) -> Tuple[float, int]:
+        asset_position = self[transaction.asset]
+        updated_position, profit_realized, liquidated_quantity = asset_position.update(transaction)
+        self[transaction.asset] = updated_position
 
-        current_position = positions[asset]
-        # TODO This does not update the stored position, only the reference.
-        profit_realized = current_position.update(transaction)
+        # For each liquidated contract, there were one short and one long contracts closed.
+        opened_contracts = transaction.quantity - 2 * liquidated_quantity
 
-        # TODO Include calculation of number of contracts opened in Position.update
-        return profit_realized, 1
+        return profit_realized, opened_contracts
