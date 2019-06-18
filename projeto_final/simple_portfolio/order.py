@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ TYPES = (
 
 
 class Order:
-    def __init__(self, asset: str, price: float, quantity: int, order_type: str, status: str = 'OPEN'):
+    def __init__(self, asset: str, price: float, quantity: int, order_type: str, status: str = 'OPEN') -> None:
         assert price > 0, f"Placed order with zero or negative price ({price})."
         assert quantity > 0, f"Placed order for zero or negative quantity of contracts ({quantity})."
         assert order_type in TYPES, f"Placed order with invalid type {order_type}. Should be one of {TYPES}."
@@ -100,13 +100,23 @@ class OrderStore(dict):
 
         return transactions_performed
 
-    def get_open_orders(self):
+    def get_open_orders(self) -> Dict[str, Order]:
         open_orders = {order_id: order for order_id, order in self.items() if order.status == 'OPEN'}
         return open_orders
 
-    def place_order(self, asset: 'str', price: float, quantity: int, order_type: str) -> None:
+    def place_order(self, asset: 'str', price: float, quantity: int, order_type: str) -> str:
         existing_ids = list(self.keys())
 
         order_id = generate_id(existing_ids)
         order = Order(asset, price, quantity, order_type)
         self[order_id] = order
+
+        return order_id
+
+    def rollback(self, order_id: str) -> str:
+        order = self[order_id]
+        # TODO If there is aging, status must go OPEN -> age -> CANCELLED
+        order.status = 'CANCELLED'
+        self[order_id] = order
+
+        return order_id
