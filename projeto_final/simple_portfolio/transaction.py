@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Union, Tuple
+from typing import Dict, Optional, Union, Tuple
 
 import pandas as pd
 
-from utils import generate_id
+from .utils import generate_id
 
 
 class Transaction:
@@ -25,8 +25,9 @@ class Transaction:
 
 
 class TransactionStore(dict):
-    def __init__(self, *args, **kwargs):
-        super.__init__(*args, **kwargs)
+    def __init__(self, transactions: Optional[Dict[str, Transaction]] = None):
+        transactions = {} if transactions is None else transactions
+        super().__init__(transactions)
 
     def register_transaction(self, transaction: Transaction) -> Tuple[str, Transaction]:
         transaction_id = generate_id(self.keys())

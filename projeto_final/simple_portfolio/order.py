@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 
 # from asset import Asset
-from transaction import Transaction
-from utils import generate_id
+from .transaction import Transaction
+from .utils import generate_id
 
 TYPES = (
     'LONG',
@@ -25,6 +25,7 @@ class Order:
         self.price = price
         self.quantity = quantity
         self.order_type = order_type
+        self.status = status
 
     def evaluate_execution(
         self,
@@ -80,14 +81,14 @@ class OrderStore(dict):
         """
         open_orders = self.get_open_orders()
         assets = np.unique([order.asset for order in open_orders.values()])
-        timestamp = ticks.index.iloc[0]
+        timestamp = ticks.index[0][0]
         transactions_performed = []
 
         for asset in assets:
-            asset_tick = ticks[asset]
-            high = asset_tick['high']
-            low = asset_tick['low']
-            quantity = asset_tick['quantity']
+            asset_tick = ticks.xs(asset, level='asset')
+            high = asset_tick['high'].values[0]
+            low = asset_tick['low'].values[0]
+            quantity = asset_tick['quantity'].values[0]
 
             asset_orders = {order_id: order for order_id, order in open_orders.items() if order.asset == asset}
             for order_id, order in asset_orders.items():

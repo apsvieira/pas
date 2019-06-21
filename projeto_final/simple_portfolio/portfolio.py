@@ -4,9 +4,9 @@ from typing import List, Optional
 
 import pandas as pd
 
-from order import OrderStore
-from transaction import TransactionStore
-from position import PositionStore
+from .order import Order, OrderStore
+from .transaction import TransactionStore
+from .position import PositionStore
 
 
 LOG_FORMAT = "%(levelname)s %(asctime)s - %(name)s: %(message)s"
@@ -32,7 +32,6 @@ class Portfolio:
 
     def process_ticks(self, ticks: pd.DataFrame, signals: pd.DataFrame) -> None:
         # TODO perform tick checking?
-
         transactions_performed = self.orders.evaluate_open_orders(ticks)
 
         for order_id, transaction in transactions_performed:
@@ -55,10 +54,43 @@ class Portfolio:
             self.allocated_capital += margin_required
             self.available_capital += profit - margin_required
 
-        orders_to_issue = self.evaluate_signals(signals)
+        orders_to_issue = self.evaluate_signals(ticks, signals)
         for asset, price, quantity, order_type in orders_to_issue:
             order_id = self.orders.place_order(asset, price, quantity, order_type)
 
-    # TODO
-    def evaluate_signals(self, signals: pd.DataFrame) -> List:
-        return []
+    def evaluate_signals(self, ticks: pd.DataFrame, signals: pd.DataFrame) -> List[Order]:
+        non_null = signals.query('signal != 0').reset_index()
+        num_signals = non_null.shape[0]
+
+        orders_to_issue = []
+        for idx in range(num_signals):
+            asset_signal = non_null.iloc[idx]
+            asset = asset_signal['asset']
+
+            direction = 'SHORT' if asset_signal['signal'] == -1 else 'LONG'
+            order_size = self._get_order_size(asset, direction)
+            price = self._get_order_price(ticks.xs(asset, level='asset'), direction)
+
+            order_params = [asset, price, order_size, direction]
+            orders_to_issue.append(order_params)
+
+        return orders_to_issue
+
+    def _get_order_size(self, asset: str, direction: str) -> int:
+        # TODO Implement logic to decide order size based on current positions.
+        return 100
+
+    def _get_order_price(self, tick, direction: str) -> float:
+        # TODO Implement logic to decide order price based on current positions.
+        price = tick['low'].values[0] if direction == 'SHORT' else tick['high'].values[0]
+        return price
+
+    def backtest(self, ticks: pd.DataFrame, signals: pd.DataFrame) -> float:
+        tick_times = ticks.index.get_level_values('date').unique()
+        for i, time in enumerate(tick_times):
+            period_ticks = ticks.loc[time:time]
+            period_signals = signals.loc[time:time]
+            self.logger.info(f"Period {i}: Evaluating information for {time}.")
+            self.process_ticks(period_ticks, period_signals)
+
+        return self.available_capital

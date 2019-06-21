@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import Dict, Optional, Tuple
 
-from transaction import Transaction
+from .transaction import Transaction
 
 
 class Position:
