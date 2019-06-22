@@ -1,14 +1,17 @@
+from typing import List
 from uuid import uuid4
 
 import pandas as pd
 
 
-def process_profitchart_data(df):
+def process_profitchart_data(df: pd.DataFrame) -> pd.DataFrame:
     """Process data from BR Profit Chart format to OHLC format."""
     _df = df.copy()
 
     _df['datetime'] = _df['Data'] + ' ' + _df['Hora']
-    _df.index = pd.to_datetime(_df['datetime'], format='%d/%m/%Y %H:%M:%S').values
+    _df['datetime'] = pd.to_datetime(_df['datetime'], format='%d/%m/%Y %H:%M:%S').values
+
+    _df.index = pd.MultiIndex.from_frame(_df[['datetime', 'Ativo']], names=['datetime', 'asset'])
 
     _df = _df.drop(['Data', 'Hora', 'datetime', 'Ativo'], axis=1)
 
@@ -28,7 +31,7 @@ def process_profitchart_data(df):
     return _df
 
 
-def generate_id(existing_ids) -> str:
+def generate_id(existing_ids: List[str]) -> str:
     collision = True
 
     while collision:

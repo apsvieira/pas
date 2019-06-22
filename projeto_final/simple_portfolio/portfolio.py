@@ -86,7 +86,7 @@ class Portfolio:
         return price
 
     def backtest(self, ticks: pd.DataFrame, signals: pd.DataFrame) -> float:
-        tick_times = ticks.index.get_level_values('date').unique()
+        tick_times = ticks.index.get_level_values('datetime').unique()
         for i, time in enumerate(tick_times):
             period_ticks = ticks.loc[time:time]
             period_signals = signals.loc[time:time]

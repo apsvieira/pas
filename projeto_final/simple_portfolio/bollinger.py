@@ -45,7 +45,7 @@ class BollingerBands:
         quotes = self.quotes
         
         candles = go.Candlestick(
-            x=quotes.index,
+            x=quotes.index.get_level_values('datetime'),
             open=quotes['open'],
             high=quotes['high'],
             low=quotes['low'],
