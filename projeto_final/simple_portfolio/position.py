@@ -74,14 +74,15 @@ class Position:
         # profit := (short_price - long_price) * traded_quantity
         profit_mult = -1 if other_direction == 'LONG' else 1
 
+        quantity = transaction.quantity
         total_liquidated_quantity = 0
         total_profit = 0
 
-        while total_liquidated_quantity < transaction.quantity:
+        while quantity > 0 and len(opposite_entries) > 0:
             entry = opposite_entries.pop()
             opposite_quantity = entry['quantity']
 
-            liquidated_quantity = min(opposite_quantity, transaction.quantity)
+            liquidated_quantity = min(opposite_quantity, quantity)
             total_profit += profit_mult * (entry['entry_price'] - transaction.price) * liquidated_quantity
 
             if liquidated_quantity < opposite_quantity:
@@ -90,10 +91,32 @@ class Position:
                 opposite_entries.append(entry)
 
             total_liquidated_quantity += liquidated_quantity
+            quantity -= liquidated_quantity
 
         current_entries[other_direction] = opposite_entries
 
         return current_entries, total_profit, total_liquidated_quantity
+
+    def summary(self):
+        entries = self.entries
+        if len(entries['LONG']) != 0:
+            direction = 'LONG'
+        else:
+            direction = 'SHORT'
+        
+        net_quantity = sum((entry['quantity'] for entry in entries[direction]))
+        
+        return {'direction': direction, 'quantity': net_quantity}
+
+    def __repr__(self):
+        summ = self.summary()
+        message = f"""
+        Position in Asset {self.asset}
+
+        Outstanding {summ['quantity']} {summ['direction']} contracts.
+        """
+
+        return message
 
 
 class PositionStore(defaultdict):
@@ -119,3 +142,7 @@ class PositionStore(defaultdict):
         opened_contracts = transaction.quantity - 2 * liquidated_quantity
 
         return updated_position, profit_realized, opened_contracts
+
+    def summary(self):
+        summary = {asset: position.summary() for asset, position in self.items()}
+        return summary

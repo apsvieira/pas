@@ -94,3 +94,16 @@ class Portfolio:
             self.process_ticks(period_ticks, period_signals)
 
         return self.available_capital
+
+    def __repr__(self):
+        positions_summary = self.positions.summary()
+        message = f"""
+        Portfolio:
+            ----
+        Available Capital: {self.available_capital}
+        Allocated Capital: {self.allocated_capital}
+
+        Current Positions: {positions_summary}
+        """
+
+        return message
