@@ -1,0 +1,30 @@
+INDICE
+Running Iteration 0.
+Iteration 0: 9, 20, 7, 10067130.0, 53125
+Running Iteration 1.
+Iteration 1: 11, 24, 9, 8972970.0, 73750
+Running Iteration 2.
+Iteration 2: 13, 28, 11, 10146940.0, 66875
+Running Iteration 3.
+Iteration 3: 15, 32, 13, 9106700.0, 11250
+
+(10213815.0, (13, 28, 11))
+Available Capital: 12117900.0
+        Allocated Capital: 33125
+
+LMS
+Iteration 0: 21, 44, 19, 10000000.0, 1e-08, 0
+Iteration 1: 21, 44, 19, 10000000.0, 5e-09, 0
+10000000.0
+
+ES
+Iteration 0: 21, 44, 19, 10000000.0, 1e-08, 0
+Iteration 1: 21, 44, 19, 10000000.0, 5e-09, 0
+10000000.0
+
+RLS
+Iteration 0: 21, 44, 19, 10000000.0, 0.999, 1, 0
+Iteration 1: 21, 44, 19, 10000000.0, 0.999, 5, 0
+Iteration 2: 21, 44, 19, 10000000.0, 0.99, 1, 0
+Iteration 3: 21, 44, 19, 10000000.0, 0.99, 5, 0
+10000000.0

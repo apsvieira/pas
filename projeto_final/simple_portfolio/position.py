@@ -36,14 +36,19 @@ class Position:
         return entry
 
     def update(self, transaction: Transaction) -> Tuple['Position', float, int]:
-        current_entries, profit, liquidated_quantity = self._liquidate_opposite_entries(transaction)
+        current_entries, profit, closed_quantity = self._liquidate_opposite_entries(transaction)
 
-        if liquidated_quantity < transaction.quantity:
-            updated_entries = self._register_entry(transaction, current_entries)
-        else:
+        if transaction.quantity <= closed_quantity:
             updated_entries = current_entries
+            open_quantity = 0
+        else:
+            transaction.quantity = transaction.quantity - closed_quantity
+            updated_entries = self._register_entry(transaction, current_entries)
+            open_quantity = transaction.quantity
 
-        return Position(self.asset, updated_entries), profit, liquidated_quantity
+        opened_contracts = open_quantity - closed_quantity
+
+        return Position(self.asset, updated_entries), profit, opened_contracts
 
     def _register_entry(self, transaction: Transaction, entries: Dict) -> Dict:
         direction = transaction.type
@@ -97,18 +102,18 @@ class Position:
 
         return current_entries, total_profit, total_liquidated_quantity
 
-    def summary(self):
+    def summary(self) -> Dict:
         entries = self.entries
         if len(entries['LONG']) != 0:
             direction = 'LONG'
         else:
             direction = 'SHORT'
-        
+
         net_quantity = sum((entry['quantity'] for entry in entries[direction]))
-        
+
         return {'direction': direction, 'quantity': net_quantity}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         summ = self.summary()
         message = f"""
         Position in Asset {self.asset}
@@ -136,13 +141,23 @@ class PositionStore(defaultdict):
 
     def update_position(self, transaction: Transaction) -> Tuple[Position, float, int]:
         asset_position = self[transaction.asset]
-        updated_position, profit_realized, liquidated_quantity = asset_position.update(transaction)
-
-        # For each liquidated contract, there were one short and one long contracts closed.
-        opened_contracts = transaction.quantity - 2 * liquidated_quantity
+        updated_position, profit_realized, opened_contracts = asset_position.update(transaction)
 
         return updated_position, profit_realized, opened_contracts
 
-    def summary(self):
+    def summary(self) -> Dict:
         summary = {asset: position.summary() for asset, position in self.items()}
         return summary
+
+    def __repr__(self) -> str:
+        summary = self.summary()
+
+        message = """
+        PositionStore containing the following positions:
+
+        """
+
+        for asset, pos in summary.items():
+            message += f"Asset {asset}: {pos['quantity']} outstanding {pos['direction']} contracts.\n"
+
+        return message

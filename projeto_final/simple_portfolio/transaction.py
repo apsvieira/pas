@@ -23,6 +23,13 @@ class Transaction:
         timestamp = timestamp if isinstance(timestamp, datetime) else pd._tslib.parse_datetime_string(timestamp)
         self.timestamp = timestamp
 
+    def __repr__(self) -> str:
+        message = f"""
+        Transaction [{self.timestamp}]: {self.type} {self.quantity} {self.asset} at {self.price}
+        """
+
+        return message
+
 
 class TransactionStore(dict):
     def __init__(self, transactions: Optional[Dict[str, Transaction]] = None):

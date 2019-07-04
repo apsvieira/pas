@@ -10,7 +10,7 @@ def lms(
     pace: Optional[float] = None
 ) -> np.ndarray:
     if pace is None:
-        pace = 1 / (num_parameters * np.correlate(signal, signal, 'valid'))
+        pace = signal.var() / (num_parameters * np.correlate(signal, signal, 'valid'))
 
     weights = np.zeros(num_parameters).reshape(-1, 1)
     samples = np.zeros(num_parameters).reshape(-1, 1)
